@@ -1,0 +1,49 @@
+# API Keys 配置
+# 请填入你的 API Key
+
+# Alpha Vantage - 股票价格数据 + 新闻
+# 申请地址: https://www.alphavantage.co/support/#api-key
+ALPHA_VANTAGE_KEY: "43N28N1YGR4J7USM"
+
+# Finnhub - 新闻数据
+# 申请地址: https://finnhub.io/
+FINNHUB_KEY: "cvgl0a9r01qjgp3mgvhgcvgl0a9r01qjgp3mgvi0"
+
+# FMP (Financial Modeling Prep) - 基本面数据 (可选)
+# 申请地址: https://site.financialmodelingprep.com/
+FMP_KEY: "bxzRLGpj040SdXWOaOeZ4quBMmukfU4c"
+
+# Alpaca - 交易执行
+# 申请地址: https://alpaca.markets/
+# 注意: 使用 Paper Trading (模拟盘) 测试
+ALPACA_API_KEY: "PKHKHFURZKGNPABR4R6BO4W5SV"
+ALPACA_SECRET_KEY: "3VykyyxHme5VujS63ksdR8giHwZ1YYXPFxqWgo1JYgRY"
+ALPACA_PAPER: true  # true = 模拟盘, false = 实盘
+
+# DeepSeek - AI 决策
+# 申请地址: https://platform.deepseek.com/
+DEEPSEEK_API_KEY: "sk-dae0526dd68f4b7581ae97c384e2bafc"
+DEEPSEEK_BASE_URL: "https://api.deepseek.com"  # 或自定义代理地址
+DEEPSEEK_MODEL: "deepseek-chat"  # 或用 "deepseek-reasoner" (v3.2)
+
+# 交易设置
+TRADING:
+  # 监控的股票列表
+  WATCHLIST:
+    - "AAPL"
+    - "NVDA"
+    - "MSFT"
+    - "GOOGL"
+    - "AMZN"
+    - "META"
+    - "TSLA"
+  
+  # 交易间隔 (秒)
+  INTERVAL: 300  # 5分钟
+  
+  # 风控参数
+  STOP_LOSS: 0.20      # 20% 止损
+  TAKE_PROFIT: 0.30   # 30% 止盈
+  MAX_POSITION: 0.20  # 单股最大 20% 仓位
+  MAX_TRADE: 0.10     # 每次交易最大 10% 仓位
+  MAX_DAILY_LOSS: 0.03 # 单日最大亏损 3%

@@ -1,0 +1,24 @@
+# 数据采集
+alphavantage>=1.3.0
+financialmodelingprep>=4.0.0
+alpaca-py>=0.15.0
+requests>=2.31.0
+
+# AI
+openai>=1.12.0  # DeepSeek 兼容 OpenAI 格式
+
+# 数据处理
+pandas>=2.0.0
+numpy>=1.24.0
+
+# 存储
+sqlalchemy>=2.0.0
+
+# 配置
+pyyaml>=6.0
+python-dotenv>=1.0.0
+
+# 工具
+logging (内置)
+json (内置)
+datetime (内置)
