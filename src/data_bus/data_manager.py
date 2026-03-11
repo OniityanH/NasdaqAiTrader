@@ -5,9 +5,9 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import logging
 
-from .market_data import MarketDataCollector
-from .fundamental_data import FundamentalDataCollector
-from .alpaca_data import AlpacaDataCollector
+from ..data_collector.market_data import MarketDataCollector
+from ..data_collector.fundamental_data import FundamentalDataCollector
+from ..data_collector.alpaca_data import AlpacaDataCollector
 
 logger = logging.getLogger(__name__)
 
@@ -192,6 +192,19 @@ def format_stock_data_for_ai(data: Dict[str, Any]) -> Dict[str, Any]:
     if position and position.get("current_price"):
         position_value = position["qty"] * position["current_price"]
     
+    # 获取所有持仓
+    all_positions = account.get("positions", {}) if account else {}
+    all_positions_list = []
+    for sym, pos in all_positions.items():
+        all_positions_list.append({
+            "symbol": sym,
+            "qty": pos.get("qty", 0),
+            "avg_entry_price": pos.get("avg_entry_price", 0),
+            "current_price": pos.get("current_price", 0),
+            "unrealized_pl": pos.get("unrealized_pl", 0),
+            "unrealized_pl_pct": pos.get("unrealized_plpc", 0),
+        })
+    
     return {
         # 交易对/股票
         "symbol": data.get("symbol", ""),
@@ -223,13 +236,16 @@ def format_stock_data_for_ai(data: Dict[str, Any]) -> Dict[str, Any]:
         "news_summary": news_summary,
         
         # 账户/持仓
-        "cash": account.get("cash", 0),
-        "buying_power": account.get("buying_power", 0),
+        "cash": account.get("cash", 0) if account else 0,
+        "buying_power": account.get("buying_power", 0) if account else 0,
         "position_qty": position.get("qty", 0) if position else 0,
         "avg_entry_price": position.get("avg_entry_price", 0) if position else 0,
         "position_value": position_value,
         "unrealized_pl": unrealized_pl,
         "unrealized_pl_pct": unrealized_pl_pct,
+        
+        # 全部持仓
+        "all_positions": all_positions_list,
     }
 
 

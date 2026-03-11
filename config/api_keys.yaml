@@ -28,15 +28,28 @@ DEEPSEEK_MODEL: "deepseek-chat"  # 或用 "deepseek-reasoner" (v3.2)
 
 # 交易设置
 TRADING:
-  # 监控的股票列表
+  # 监控的股票列表 (20只)
   WATCHLIST:
-    - "AAPL"
-    - "NVDA"
-    - "MSFT"
-    - "GOOGL"
-    - "AMZN"
-    - "META"
-    - "TSLA"
+    - "AAPL"    # Apple
+    - "NVDA"    # NVIDIA
+    - "MSFT"    # Microsoft
+    - "GOOGL"   # Google
+    - "AMZN"    # Amazon
+    - "META"    # Meta
+    - "TSLA"    # Tesla
+    - "AMD"     # AMD
+    - "INTC"    # Intel
+    - "NFLX"    # Netflix
+    - "PYPL"    # PayPal
+    - "ADBE"    # Adobe
+    - "CRM"     # Salesforce
+    - "ORCL"    # Oracle
+    - "IBM"     # IBM
+    - "CSCO"    # Cisco
+    - "QCOM"    # Qualcomm
+    - "TXN"     # Texas Instruments
+    - "AVGO"    # Broadcom
+    - "MU"      # Micron
   
   # 交易间隔 (秒)
   INTERVAL: 300  # 5分钟

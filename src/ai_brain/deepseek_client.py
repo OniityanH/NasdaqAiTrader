@@ -2,7 +2,9 @@
 AI 决策大脑 - DeepSeek
 """
 import json
+import os
 import logging
+from datetime import datetime
 from typing import Dict, Any, Optional, List
 from openai import OpenAI
 
@@ -12,7 +14,7 @@ logger = logging.getLogger(__name__)
 class DeepSeekBrain:
     """DeepSeek AI 决策大脑"""
     
-    def __init__(self, api_key: str, base_url: str = "https://api.deepseek.com", model: str = "deepseek-chat"):
+    def __init__(self, api_key: str, base_url: str = "https://api.deepseek.com", model: str = "deepseek-chat", save_runs: bool = True):
         """
         初始化
         
@@ -20,9 +22,12 @@ class DeepSeekBrain:
             api_key: DeepSeek API Key
             base_url: API 端点
             model: 模型名称 (deepseek-chat 或 deepseek-reasoner v3.2)
+            save_runs: 是否保存每次运行的 prompt 和输出
         """
         self.client = OpenAI(api_key=api_key, base_url=base_url)
         self.model = model
+        self.save_runs = save_runs
+        self.runs_dir = "runs"
     
     def make_decision(
         self,
@@ -54,6 +59,10 @@ class DeepSeekBrain:
             
             result = response.choices[0].message.content
             decision = self.parse_response(result)
+            
+            # 保存运行记录
+            if self.save_runs:
+                self._save_run(stock_data.get('symbol', 'UNKNOWN'), prompt, result, decision)
             
             logger.info(f"AI 决策: {decision}")
             return decision
@@ -90,7 +99,10 @@ class DeepSeekBrain:
 - USDT可用余额: ${data.get('cash', 0):,.2f}
 - 购买力: ${data.get('buying_power', 0):,.2f}
 
-## 持仓状态
+## 当前持仓 (全部股票)
+{self._format_all_positions(data.get('all_positions', []))}
+
+## 持仓状态 (当前交易对)
 - 当前持仓: {data.get('position_qty', 0):.4f} 股
 - 开仓价格: ${data.get('avg_entry_price', 0):.2f}
 - 当前盈亏: {data.get('unrealized_pl_pct', 0):.2f}%
@@ -134,6 +146,44 @@ class DeepSeekBrain:
 ```
 """
         return prompt
+    
+    def _format_all_positions(self, positions: List[Dict]) -> str:
+        """格式化所有持仓"""
+        if not positions:
+            return "当前无持仓"
+        
+        lines = ["| 股票 | 数量 | 成本价 | 当前价 | 盈亏 |", "|------|------|--------|--------|------|"]
+        for p in positions:
+            symbol = p.get('symbol', '')
+            qty = p.get('qty', 0)
+            avg_price = p.get('avg_entry_price', 0)
+            current_price = p.get('current_price', 0)
+            pl_pct = p.get('unrealized_pl_pct', 0) * 100
+            lines.append(f"| {symbol} | {qty} | ${avg_price:.2f} | ${current_price:.2f} | {pl_pct:+.2f}% |")
+        
+        return "\n".join(lines)
+    
+    def _save_run(self, symbol: str, prompt: str, raw_response: str, decision: Dict):
+        """保存运行记录到 runs 文件夹"""
+        try:
+            os.makedirs(self.runs_dir, exist_ok=True)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"{self.runs_dir}/{timestamp}_{symbol}.json"
+            
+            data = {
+                "timestamp": datetime.now().isoformat(),
+                "symbol": symbol,
+                "prompt": prompt,
+                "raw_response": raw_response,
+                "decision": decision
+            }
+            
+            with open(filename, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            
+            logger.info(f"运行记录已保存: {filename}")
+        except Exception as e:
+            logger.error(f"保存运行记录失败: {e}")
     
     def _format_price_history(self, price_history: List[Dict]) -> str:
         """格式化价格历史为表格"""

@@ -2,9 +2,6 @@
 数据采集器 - Alpaca 账户和持仓数据
 """
 from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import GetAccountRequest, GetPositionsRequest
-from alpaca.data.historical import StockHistoricalDataClient
-from alpaca.data.requests import StockLatestQuoteRequest
 from typing import Optional, Dict, Any, List
 import logging
 
@@ -24,9 +21,6 @@ class AlpacaDataCollector:
             paper: 是否使用模拟盘 (True = Paper Trading)
         """
         self.trading_client = TradingClient(api_key, secret_key, paper=paper)
-        
-        # Historical data client for quotes
-        self.historical_client = StockHistoricalDataClient(api_key, secret_key)
     
     def get_account(self) -> Dict[str, Any]:
         """
@@ -50,7 +44,6 @@ class AlpacaDataCollector:
                 "last_equity": float(account.last_equity),
                 "multiplier": float(account.multiplier),
                 "pattern_day_trader": account.pattern_day_trader,
-                "trading_mode": account.trading_mode,
             }
         except Exception as e:
             logger.error(f"获取账户信息失败: {e}")
@@ -135,25 +128,16 @@ class AlpacaDataCollector:
     
     def get_latest_quote(self, symbol: str) -> Optional[Dict[str, Any]]:
         """
-        获取最新报价
+        获取最新报价 (通过持仓数据)
         """
-        try:
-            request = StockLatestQuoteRequest(symbol_or_symbols=symbol)
-            quotes = self.historical_client.get_stock_latest_quote(request)
-            
-            quote = quotes[symbol]
+        # 从持仓获取当前价格
+        position = self.get_position(symbol)
+        if position:
             return {
                 "symbol": symbol,
-                "bid_price": quote.bid_price,
-                "bid_size": quote.bid_size,
-                "ask_price": quote.ask_price,
-                "ask_size": quote.ask_size,
-                "last_price": quote.last_price,
-                "timestamp": str(quote.timestamp),
+                "current_price": position.get("current_price", 0),
             }
-        except Exception as e:
-            logger.error(f"获取 {symbol} 报价失败: {e}")
-            return None
+        return None
     
     def get_account_summary(self) -> Dict[str, Any]:
         """
