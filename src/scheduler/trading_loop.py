@@ -37,7 +37,8 @@ class TradingScheduler:
             fmp_key=api_config.get("FMP_KEY", ""),
             alpaca_api_key=api_config.get("ALPACA_API_KEY", ""),
             alpaca_secret_key=api_config.get("ALPACA_SECRET_KEY", ""),
-            alpaca_paper=api_config.get("ALPACA_PAPER", True)
+            alpaca_paper=api_config.get("ALPACA_PAPER", True),
+            newsdata_key=api_config.get("NEWSADATA_KEY", "")
         )
         
         # 初始化 AI 大脑

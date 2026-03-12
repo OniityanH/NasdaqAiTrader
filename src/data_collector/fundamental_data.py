@@ -30,7 +30,12 @@ class FundamentalDataCollector:
             response = requests.get(url, params=params, timeout=10)
             data = response.json()
             
-            if data and len(data) > 0:
+            # 检查是否返回错误信息
+            if isinstance(data, dict) and "Error Message" in data:
+                logger.warning(f"FMP API错误: {data.get('Error Message')}")
+                return None
+            
+            if data and isinstance(data, list) and len(data) > 0:
                 profile = data[0]
                 return {
                     "symbol": profile.get("symbol"),
@@ -69,7 +74,12 @@ class FundamentalDataCollector:
             response = requests.get(url, params=params, timeout=10)
             data = response.json()
             
-            if data and len(data) > 0:
+            # 检查是否返回错误信息
+            if isinstance(data, dict) and "Error Message" in data:
+                logger.warning(f"FMP API错误: {data.get('Error Message')}")
+                return None
+            
+            if data and isinstance(data, list) and len(data) > 0:
                 metrics = data[0]
                 return {
                     "symbol": metrics.get("symbol"),
@@ -127,7 +137,12 @@ class FundamentalDataCollector:
             response = requests.get(url, params=params, timeout=10)
             data = response.json()
             
-            if data and len(data) > 0:
+            # 检查是否返回错误信息
+            if isinstance(data, dict) and "Error Message" in data:
+                logger.warning(f"FMP API错误: {data.get('Error Message')}")
+                return None
+            
+            if data and isinstance(data, list) and len(data) > 0:
                 quote = data[0]
                 return {
                     "symbol": quote.get("symbol"),
@@ -203,7 +218,12 @@ class FundamentalDataCollector:
             response = requests.get(url, params=params, timeout=10)
             data = response.json()
             
-            if data and len(data) > 0:
+            # 检查是否返回错误信息
+            if isinstance(data, dict) and "Error Message" in data:
+                logger.warning(f"FMP API错误: {data.get('Error Message')}")
+                return None
+            
+            if data and isinstance(data, list) and len(data) > 0:
                 latest = data[0]  # 最新目标价
                 return {
                     "symbol": latest.get("symbol"),
@@ -230,7 +250,12 @@ class FundamentalDataCollector:
             response = requests.get(url, params=params, timeout=10)
             data = response.json()
             
-            if data and len(data) > 0:
+            # 检查是否返回错误信息
+            if isinstance(data, dict) and "Error Message" in data:
+                logger.warning(f"FMP API错误: {data.get('Error Message')}")
+                return None
+            
+            if data and isinstance(data, list) and len(data) > 0:
                 rating = data[0]
                 return {
                     "symbol": rating.get("symbol"),

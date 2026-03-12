@@ -8,6 +8,8 @@ import logging
 from ..data_collector.market_data import MarketDataCollector
 from ..data_collector.fundamental_data import FundamentalDataCollector
 from ..data_collector.alpaca_data import AlpacaDataCollector
+from ..data_collector.newsdata_collector import NewsDataCollector
+from ..data_collector.yfinance_collector import YFinanceCollector
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +25,8 @@ class DataBus:
         fmp_key: str,
         alpaca_api_key: str,
         alpaca_secret_key: str,
-        alpaca_paper: bool = True
+        alpaca_paper: bool = True,
+        newsdata_key: str = ""
     ):
         """初始化所有数据采集器"""
         self.market_collector = MarketDataCollector(alpha_vantage_key)
@@ -33,6 +36,11 @@ class DataBus:
             alpaca_secret_key, 
             alpaca_paper
         )
+        # 新闻采集器
+        self.news_collector = NewsDataCollector(newsdata_key) if newsdata_key else None
+        
+        # yfinance 采集器 (备用)
+        self.yfinance_collector = YFinanceCollector()
         
         # 缓存
         self._cache: Dict[str, Dict[str, Any]] = {}
@@ -59,13 +67,28 @@ class DataBus:
         market_data = self.market_collector.get_quote(symbol)
         self.market_collector.rate_limit_wait()  # 遵守API限制
         
-        # 2. 获取基本面数据 (FMP)
+        # 2. 获取基本面数据 (优先FMP，失败则用yfinance)
         fundamental_data = self.fundamental_collector.get_all_data(symbol)
         
-        # 3. 获取持仓数据 (Alpaca)
+        # 如果FMP失败（数据为空），使用yfinance备用
+        if not fundamental_data or not fundamental_data.get("profile"):
+            logger.info(f"FMP数据获取失败，使用yfinance备用: {symbol}")
+            yf_data = self.yfinance_collector.get_all_data(symbol)
+            if yf_data:
+                fundamental_data = yf_data
+                # 用yfinance的quote更新market数据
+                if yf_data.get("quote"):
+                    market_data = yf_data["quote"]
+        
+        # 3. 获取新闻数据 (NewsData.io)
+        news_data = []
+        if self.news_collector:
+            news_data = self.news_collector.get_stock_news([symbol], limit=5) or []
+        
+        # 4. 获取持仓数据 (Alpaca)
         position = self.alpaca_collector.get_position(symbol)
         
-        # 4. 获取账户数据 (Alpaca)
+        # 5. 获取账户数据 (Alpaca)
         account = self.alpaca_collector.get_account()
         
         # 整合数据
@@ -78,6 +101,9 @@ class DataBus:
             
             # 基本面数据
             "fundamental": fundamental_data,
+            
+            # 新闻数据
+            "news": news_data,
             
             # 持仓数据
             "position": position,
@@ -120,6 +146,26 @@ class DataBus:
         """
         return self.alpaca_collector.get_account_summary()
     
+    def get_news(self, symbols: List[str] = None, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        获取股票新闻
+        
+        Args:
+            symbols: 股票代码列表，None 表示获取市场新闻
+            limit: 新闻数量
+            
+        Returns:
+            新闻列表
+        """
+        if not self.news_collector:
+            logger.warning("新闻采集器未初始化")
+            return []
+        
+        if symbols:
+            return self.news_collector.get_stock_news(symbols, limit)
+        else:
+            return self.news_collector.get_market_news(limit)
+    
     def _is_cached(self, symbol: str) -> bool:
         """检查缓存是否有效"""
         if symbol not in self._cache:
@@ -156,7 +202,7 @@ def format_stock_data_for_ai(data: Dict[str, Any]) -> Dict[str, Any]:
     profile = fundamental.get("profile", {})
     rating = fundamental.get("rating", {})
     price_target = fundamental.get("price_target", {})
-    news = fundamental.get("news", [])
+    news = data.get("news", [])  # 从 stock_data 中获取新闻
     position = data.get("position", {})
     account = data.get("account", {})
     
@@ -227,8 +273,8 @@ def format_stock_data_for_ai(data: Dict[str, Any]) -> Dict[str, Any]:
         "week52_low": week52_low or 0,
         "price_vs_52w": price_vs_52w,
         "price_target": price_target.get("price_target_avg") or "N/A",
-        "analyst_rating": rating.get("rating") or "N/A",
-        "num_analysis": rating.get("total_analysts") or price_target.get("number_of_analysts") or 0,
+        "analyst_rating": rating.get("rating") or price_target.get("rating") or "N/A",
+        "num_analysis": rating.get("total_analysts") or price_target.get("total_analysts") or 0,
         "beta": profile.get("beta") or 1.0,
         
         # 新闻
