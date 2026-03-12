@@ -250,8 +250,10 @@ class AlpacaTrader:
         Returns:
             订单结果
         """
-        # 计算买入数量 (使用10%仓位)
+        # 计算买入数量 (使用10%仓位，但不超过$10000)
         max_amount = cash * max_position_pct
+        # 每次交易不超过$10000
+        max_amount = min(max_amount, 10000)
         qty = int(max_amount / current_price)
         
         if qty <= 0:
