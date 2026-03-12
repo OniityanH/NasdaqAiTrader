@@ -130,7 +130,7 @@ class DeepSeekBrain:
 - 止盈目标: {risk_config.get('take_profit', 0.30) * 100}%
 - 单股最大仓位: {risk_config.get('max_position', 0.20) * 100}%
 - 每次交易最大仓位: {risk_config.get('max_trade', 0.10) * 100}%
-- 每次交易最大金额: $10000
+- 每次交易最大金额: $3000
 
 ## 📋 输出格式
 请严格按照以下JSON格式输出决策 (只输出JSON，不要其他内容):
