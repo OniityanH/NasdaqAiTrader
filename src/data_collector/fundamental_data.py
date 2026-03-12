@@ -3,6 +3,7 @@
 使用 FMP (Financial Modeling Prep) API 获取基本面数据
 """
 import requests
+from requests.exceptions import Timeout, RequestException
 from typing import Optional, Dict, Any, List
 import logging
 
@@ -27,7 +28,7 @@ class FundamentalDataCollector:
         params = {"apikey": self.api_key}
         
         try:
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, params=params, timeout=3)
             data = response.json()
             
             # 检查是否返回错误信息
@@ -56,6 +57,12 @@ class FundamentalDataCollector:
                 }
             return None
             
+        except Timeout:
+            logger.warning(f"FMP 请求超时: {symbol}")
+            return None
+        except RequestException as e:
+            logger.warning(f"FMP 请求错误: {symbol} - {e}")
+            return None
         except Exception as e:
             logger.error(f"获取 {symbol} 基本信息失败: {e}")
             return None
@@ -71,7 +78,7 @@ class FundamentalDataCollector:
         }
         
         try:
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, params=params, timeout=3)
             data = response.json()
             
             # 检查是否返回错误信息
@@ -134,7 +141,7 @@ class FundamentalDataCollector:
         params = {"apikey": self.api_key}
         
         try:
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, params=params, timeout=3)
             data = response.json()
             
             # 检查是否返回错误信息
@@ -183,7 +190,7 @@ class FundamentalDataCollector:
         }
         
         try:
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, params=params, timeout=3)
             data = response.json()
             
             if isinstance(data, list):
@@ -215,7 +222,7 @@ class FundamentalDataCollector:
         }
         
         try:
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, params=params, timeout=3)
             data = response.json()
             
             # 检查是否返回错误信息
@@ -247,7 +254,7 @@ class FundamentalDataCollector:
         params = {"apikey": self.api_key}
         
         try:
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, params=params, timeout=3)
             data = response.json()
             
             # 检查是否返回错误信息

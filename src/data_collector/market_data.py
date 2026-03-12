@@ -35,8 +35,14 @@ class MarketDataCollector:
         }
         
         try:
-            response = requests.get(self.base_url, params=params, timeout=10)
+            # 缩短超时时间，避免长时间等待
+            response = requests.get(self.base_url, params=params, timeout=5)
             data = response.json()
+            
+            # 检查是否有速率限制错误
+            if isinstance(data, dict) and "Information" in data:
+                logger.warning(f"Alpha Vantage 速率限制: {data.get('Information')}")
+                return None
             
             if "Global Quote" in data and data["Global Quote"]:
                 quote = data["Global Quote"]
@@ -54,6 +60,12 @@ class MarketDataCollector:
                 logger.warning(f"无法获取 {symbol} 的报价: {data}")
                 return None
                 
+        except requests.exceptions.Timeout:
+            logger.warning(f"Alpha Vantage 请求超时: {symbol}")
+            return None
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Alpha Vantage 请求错误: {symbol} - {e}")
+            return None
         except Exception as e:
             logger.error(f"获取 {symbol} 报价失败: {e}")
             return None

@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-03-12T09:55:39.905799",
+  "symbol": "AAPL",
+  "prompt": "# 角色\n你是一个专业的美股量化交易员，擅长基本面分析。你需要根据以下数据做出理性的买入/卖出/持有决策。\n\n## 交易对\nAAPL\n\n## 账户资金\n- USDT可用余额: $95,560.48\n- 购买力: $195,871.96\n\n## 当前持仓 (全部股票)\n当前无持仓\n\n## 持仓状态 (当前交易对)\n- 当前持仓: 0.0000 股\n- 开仓价格: $0.00\n- 当前盈亏: 0.00%\n- 持仓价值: $0.00\n\n## 📈 价格数据 (最近10个交易日)\n无历史数据\n\n## 🏢 公司基本面\n- 公司名称: None\n- 市值: N/A\n- 市盈率 (PE): None\n- 每股收益 (EPS): $N/A\n- 52周最高: $0.00\n- 52周最低: $0.00\n- 当前价格 vs 52周: N/A\n- 目标价: $N/A\n- 分析师评级: N/A (0 家机构)\n\n## 新闻 (5 条)\n1. [] Apple vs Tesla in 2026: Which Stock Will Anchor Your Retirement and Which Will Wreck It?\n2. [] Apple vs Tesla in 2026: Which Stock Will Anchor Your Retirement and Which Will Wreck It?\n3. [] I’d Own VGT for the Next 30 Years, And Never Look Back\n\n## ⚠️ 风控参数\n- 最大止损: 20.0%\n- 止盈目标: 30.0%\n- 单股最大仓位: 20.0%\n- 每次交易最大仓位: 10.0%\n\n## 📋 输出格式\n请严格按照以下JSON格式输出决策 (只输出JSON，不要其他内容):\n```json\n{\n  \"decision\": \"BUY|SELL|HOLD\",\n  \"shares\": 10,\n  \"reason\": \"决策理由(30字内)\",\n  \"stop_loss\": 169.58,\n  \"take_profit\": 205.28,\n  \"confidence\": 0.85,\n  \"risk_level\": \"LOW|MEDIUM|HIGH\"\n}\n```\n",
+  "raw_response": "```json\n{\n  \"decision\": \"HOLD\",\n  \"shares\": 0,\n  \"reason\": \"基本面数据缺失，无法进行有效分析\",\n  \"stop_loss\": 0.00,\n  \"take_profit\": 0.00,\n  \"confidence\": 0.10,\n  \"risk_level\": \"HIGH\"\n}\n```",
+  "decision": {
+    "decision": "HOLD",
+    "shares": 0,
+    "reason": "基本面数据缺失，无法进行有效分析",
+    "stop_loss": 0.0,
+    "take_profit": 0.0,
+    "confidence": 0.1,
+    "risk_level": "HIGH"
+  }
+}
