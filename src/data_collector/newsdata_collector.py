@@ -6,6 +6,7 @@ import requests
 from typing import Optional, Dict, Any, List
 import logging
 import time
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -18,16 +19,28 @@ class NewsDataCollector:
         self.base_url = "https://newsdata.io/api/1/latest"
         self._rate_limit_delay = 2  # 免费版 200次/天，间隔2秒足够
     
-    def get_stock_news(self, symbols: List[str], limit: int = 10) -> List[Dict[str, Any]]:
+    def _is_today(self, pub_date: str) -> bool:
+        """检查新闻日期是否是今天"""
+        if not pub_date:
+            return False
+        try:
+            # 解析新闻日期 (格式: 2026-03-12 14:28:40)
+            news_date = datetime.strptime(pub_date.split('.')[0], "%Y-%m-%d %H:%M:%S")
+            today = datetime.now()
+            return news_date.date() == today.date()
+        except:
+            return False
+    
+    def get_stock_news(self, symbols: List[str], limit: int = 30) -> List[Dict[str, Any]]:
         """
-        获取股票相关新闻
+        获取股票相关新闻 (默认获取30条，筛选当天新闻)
         
         Args:
             symbols: 股票代码列表
-            limit: 返回新闻数量
+            limit: 返回新闻数量 (默认30)
             
         Returns:
-            新闻列表
+            新闻列表 (只返回当天新闻)
         """
         all_news = []
         
@@ -37,7 +50,13 @@ class NewsDataCollector:
                 all_news.extend(news)
             time.sleep(self._rate_limit_delay)
         
+        # 筛选当天的新闻
+        today_news = [n for n in all_news if self._is_today(n.get('pubDate', ''))]
+        
         # 按日期排序
+        today_news.sort(key=lambda x: x.get('pubDate', ''), reverse=True)
+        
+        return today_news[:limit]
         all_news.sort(key=lambda x: x.get('pubDate', ''), reverse=True)
         
         return all_news[:limit * len(symbols)]
@@ -80,15 +99,15 @@ class NewsDataCollector:
             logger.error(f"获取 {symbol} 新闻出错: {e}")
             return None
     
-    def get_market_news(self, limit: int = 20) -> List[Dict[str, Any]]:
+    def get_market_news(self, limit: int = 30) -> List[Dict[str, Any]]:
         """
-        获取市场新闻
+       获取市场新闻 (默认30条，筛选当天新闻)
         
         Args:
-            limit: 返回新闻数量
+            limit: 返回新闻数量 (默认30)
             
         Returns:
-            新闻列表
+            新闻列表 (只返回当天新闻)
         """
         params = {
             "apikey": self.api_key,
@@ -113,8 +132,10 @@ class NewsDataCollector:
                         "source_name": item.get("source_name"),
                         "keywords": item.get("keywords", []),
                     })
-                logger.info(f"获取市场新闻成功: {len(news_list)} 条")
-                return news_list
+                # 筛选当天的新闻
+                today_news = [n for n in news_list if self._is_today(n.get('pubDate', ''))]
+                logger.info(f"获取市场新闻成功: {len(news_list)} 条, 当天新闻: {len(today_news)} 条")
+                return today_news[:limit]
             else:
                 logger.warning(f"获取市场新闻失败: {data.get('results', {}).get('message', '未知错误')}")
                 return []

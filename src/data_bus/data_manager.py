@@ -83,7 +83,7 @@ class DataBus:
         # 3. 获取新闻数据 (NewsData.io)
         news_data = []
         if self.news_collector:
-            news_data = self.news_collector.get_stock_news([symbol], limit=5) or []
+            news_data = self.news_collector.get_stock_news([symbol], limit=30) or []
         
         # 4. 获取持仓数据 (Alpaca)
         position = self.alpaca_collector.get_position(symbol)
