@@ -8,13 +8,16 @@ from datetime import datetime
 from typing import Dict, Any, Optional, List
 from openai import OpenAI
 
+# 导入本地新闻采集器
+from src.data_collector.local_news import LocalNewsCollector
+
 logger = logging.getLogger(__name__)
 
 
 class DeepSeekBrain:
     """DeepSeek AI 决策大脑"""
     
-    def __init__(self, api_key: str, base_url: str = "https://api.deepseek.com", model: str = "deepseek-chat", save_runs: bool = True):
+    def __init__(self, api_key: str, base_url: str = "https://api.deepseek.com", model: str = "deepseek-chat", save_runs: bool = True, news_dir: str = "/Users/zz/newstrader"):
         """
         初始化
         
@@ -23,11 +26,15 @@ class DeepSeekBrain:
             base_url: API 端点
             model: 模型名称 (deepseek-chat 或 deepseek-reasoner v3.2)
             save_runs: 是否保存每次运行的 prompt 和输出
+            news_dir: newstrader 新闻文件夹路径
         """
         self.client = OpenAI(api_key=api_key, base_url=base_url)
         self.model = model
         self.save_runs = save_runs
         self.runs_dir = "runs"
+        
+        # 初始化本地新闻采集器
+        self.news_collector = LocalNewsCollector(news_dir)
     
     def make_decision(
         self,
@@ -89,6 +96,16 @@ class DeepSeekBrain:
         price_history = data.get('price_history', [])
         price_table = self._format_price_history(price_history)
         
+        # 获取本地新闻
+        symbol = data.get('symbol', '')
+        local_news = self.news_collector.get_news_summary(symbol) if symbol else None
+        
+        # 构建新闻部分
+        if local_news:
+            news_section = f"## 📰 新闻 (来自本地文件)\n{local_news}"
+        else:
+            news_section = "## 📰 新闻\n无本地新闻文件，跳过新闻分析"
+        
         prompt = f"""# 角色
 你是一个专业的美股量化交易员，擅长基本面分析。你需要根据以下数据做出理性的买入/卖出/持有决策。
 
@@ -119,11 +136,8 @@ class DeepSeekBrain:
 - 52周最高: ${data.get('week52_high', 0):.2f}
 - 52周最低: ${data.get('week52_low', 0):.2f}
 - 当前价格 vs 52周: {data.get('price_vs_52w', 'N/A')}
-- 目标价: ${data.get('price_target', 'N/A')}
-- 分析师评级: {data.get('analyst_rating', 'N/A')} ({data.get('num_analysis', 0)} 家机构)
 
-## 新闻 ({data.get('news_count', 0)} 条)
-{data.get('news_summary', '无新闻')}
+## {news_section}
 
 ## ⚠️ 风控参数
 - 最大止损: {risk_config.get('stop_loss', 0.20) * 100}%
@@ -153,14 +167,14 @@ class DeepSeekBrain:
         if not positions:
             return "当前无持仓"
         
-        lines = ["| 股票 | 数量 | 成本价 | 当前价 | 盈亏 |", "|------|------|--------|--------|------|"]
+        lines = []
         for p in positions:
             symbol = p.get('symbol', '')
             qty = p.get('qty', 0)
             avg_price = p.get('avg_entry_price', 0)
             current_price = p.get('current_price', 0)
             pl_pct = p.get('unrealized_pl_pct', 0) * 100
-            lines.append(f"| {symbol} | {qty} | ${avg_price:.2f} | ${current_price:.2f} | {pl_pct:+.2f}% |")
+            lines.append(f"{symbol}: 数量={qty}, 成本价=${avg_price:.2f}, 当前价=${current_price:.2f}, 盈亏={pl_pct:+.2f}%")
         
         return "\n".join(lines)
     

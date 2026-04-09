@@ -33,3 +33,11 @@ data/
 # OS
 .DS_Store
 Thumbs.db
+
+# Config with secrets (API keys)
+config/*.yaml
+config/*.yml
+!config/*.example.yaml
+
+# Runs (trading logs)
+runs/

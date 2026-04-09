@@ -63,30 +63,25 @@ class DataBus:
             logger.info(f"使用缓存数据: {symbol}")
             return self._cache[symbol]
         
-        # 1. 获取市场数据 (Alpha Vantage)
-        market_data = self.market_collector.get_quote(symbol)
-        self.market_collector.rate_limit_wait()  # 遵守API限制
+        yf_data = self.yfinance_collector.get_all_data(symbol)
+        if yf_data:
+            fundamental_data = yf_data
+            # 用yfinance的quote更新market数据
+            if yf_data.get("quote"):
+                market_data = yf_data["quote"]
         
-        # 2. 获取基本面数据 (优先FMP，失败则用yfinance)
-        fundamental_data = self.fundamental_collector.get_all_data(symbol)
-        
-        # 如果FMP失败（数据为空），使用yfinance备用
-        if not fundamental_data or not fundamental_data.get("profile"):
-            logger.info(f"FMP数据获取失败，使用yfinance备用: {symbol}")
-            yf_data = self.yfinance_collector.get_all_data(symbol)
-            if yf_data:
-                fundamental_data = yf_data
-                # 用yfinance的quote更新market数据
-                if yf_data.get("quote"):
-                    market_data = yf_data["quote"]
-        
-        # 3. 获取新闻数据 (NewsData.io)
         news_data = []
-        if self.news_collector:
-            news_data = self.news_collector.get_stock_news([symbol], limit=30) or []
         
         # 4. 获取持仓数据 (Alpaca)
-        position = self.alpaca_collector.get_position(symbol)
+        # 先获取所有持仓，再从中查找当前股票的持仓
+        all_positions_list = self.alpaca_collector.get_positions()
+        
+        # 查找当前股票的持仓
+        position = None
+        for p in all_positions_list:
+            if p.get('symbol') == symbol:
+                position = p
+                break
         
         # 5. 获取账户数据 (Alpaca)
         account = self.alpaca_collector.get_account()
@@ -110,6 +105,9 @@ class DataBus:
             
             # 账户数据
             "account": account,
+            
+            # 所有持仓列表
+            "all_positions_raw": all_positions_list,
         }
         
         # 更新缓存
@@ -238,18 +236,8 @@ def format_stock_data_for_ai(data: Dict[str, Any]) -> Dict[str, Any]:
     if position and position.get("current_price"):
         position_value = position["qty"] * position["current_price"]
     
-    # 获取所有持仓
-    all_positions = account.get("positions", {}) if account else {}
-    all_positions_list = []
-    for sym, pos in all_positions.items():
-        all_positions_list.append({
-            "symbol": sym,
-            "qty": pos.get("qty", 0),
-            "avg_entry_price": pos.get("avg_entry_price", 0),
-            "current_price": pos.get("current_price", 0),
-            "unrealized_pl": pos.get("unrealized_pl", 0),
-            "unrealized_pl_pct": pos.get("unrealized_plpc", 0),
-        })
+    # 获取所有持仓 (使用已获取的数据)
+    all_positions_raw = data.get("all_positions_raw", [])
     
     return {
         # 交易对/股票
@@ -291,7 +279,7 @@ def format_stock_data_for_ai(data: Dict[str, Any]) -> Dict[str, Any]:
         "unrealized_pl_pct": unrealized_pl_pct,
         
         # 全部持仓
-        "all_positions": all_positions_list,
+        "all_positions": all_positions_raw,
     }
 
 
