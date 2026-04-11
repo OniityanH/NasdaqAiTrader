@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class DeepSeekBrain:
     """DeepSeek AI 决策大脑"""
     
-    def __init__(self, api_key: str, base_url: str = "https://api.deepseek.com", model: str = "deepseek-reasoner", save_runs: bool = True, news_dir: str = "/Users/zz/newstrader"):
+    def __init__(self, api_key: str, base_url: str = "https://api.deepseek.com", model: str = "deepseek-chat", save_runs: bool = True, news_dir: str = "/Users/zz/newstrader"):
         """
         初始化
         

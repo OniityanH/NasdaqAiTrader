@@ -24,34 +24,50 @@ class TradingScheduler:
         config_path: str = "config/api_keys.yaml"
     ):
         """初始化"""
-        # 加载配置
+        # 加载环境变量
+        load_dotenv()
+        
+        # 加载配置文件
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
         
-        # 提取配置
+        # 提取配置 (环境变量优先，YAML 作为回退)
         api_config = self.config
+        
+        def env_or_config(env_key: str, config_key: str = None, default: str = "") -> str:
+            """优先从环境变量读取，其次从配置文件"""
+            return os.environ.get(env_key) or api_config.get(config_key or env_key, default)
+        
+        alpha_vantage_key = env_or_config("ALPHA_VANTAGE_KEY")
+        fmp_key = env_or_config("FMP_KEY")
+        alpaca_api_key = env_or_config("ALPACA_API_KEY")
+        alpaca_secret_key = env_or_config("ALPACA_SECRET_KEY")
+        alpaca_paper = os.environ.get("ALPACA_PAPER", str(api_config.get("ALPACA_PAPER", "true"))).lower() == "true"
+        newsdata_key = env_or_config("NEWSADATA_KEY", "NEWSADATA_KEY") or env_or_config("NEWSATA_KEY")
+        deepseek_api_key = env_or_config("DEEPSEEK_API_KEY")
+        deepseek_base_url = env_or_config("DEEPSEEK_BASE_URL", default="https://api.deepseek.com")
         
         # 初始化数据总线
         self.data_bus = DataBus(
-            alpha_vantage_key=api_config.get("ALPHA_VANTAGE_KEY", ""),
-            fmp_key=api_config.get("FMP_KEY", ""),
-            alpaca_api_key=api_config.get("ALPACA_API_KEY", ""),
-            alpaca_secret_key=api_config.get("ALPACA_SECRET_KEY", ""),
-            alpaca_paper=api_config.get("ALPACA_PAPER", True),
-            newsdata_key=api_config.get("NEWSADATA_KEY", "")
+            alpha_vantage_key=alpha_vantage_key,
+            fmp_key=fmp_key,
+            alpaca_api_key=alpaca_api_key,
+            alpaca_secret_key=alpaca_secret_key,
+            alpaca_paper=alpaca_paper,
+            newsdata_key=newsdata_key
         )
         
         # 初始化 AI 大脑
         self.ai_brain = DeepSeekBrain(
-            api_key=api_config.get("DEEPSEEK_API_KEY", ""),
-            base_url=api_config.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+            api_key=deepseek_api_key,
+            base_url=deepseek_base_url
         )
         
         # 初始化交易执行器
         self.trader = AlpacaTrader(
-            api_key=api_config.get("ALPACA_API_KEY", ""),
-            secret_key=api_config.get("ALPACA_SECRET_KEY", ""),
-            paper=api_config.get("ALPACA_PAPER", True)
+            api_key=alpaca_api_key,
+            secret_key=alpaca_secret_key,
+            paper=alpaca_paper
         )
         
         # 交易配置
